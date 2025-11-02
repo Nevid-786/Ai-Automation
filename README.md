@@ -49,7 +49,7 @@
 | 🎨 [**Frontend**](https://github.com/Nevid-786/Frontend) | Frontend projects using HTML & CSS. |
 | 🌿 [**Nature_Layot_using_CSS_Grid**](https://github.com/Nevid-786/Nature_Layot_using_CSS_Grid) | Creative layout design with CSS Grid. |
 | 🐍 [**Python_Projects**](https://github.com/Nevid-786/Python_Projects) | Python projects for real-world problems. |
-| 🤖 [**Ai-Automation**](https://github.com/Nevid-786/Ai-Automation) | Projects related to AI-driven automation and intelligent systems. |
+| 🤖 [**Ai-Automation**](https://github.com/Nevid-786/Ai-Automation) | Projects focusing on AI-driven automation solutions. |
 
 ---
 
