@@ -41,6 +41,7 @@
 
 | Project | Description |
 |---|---|
+| 🤖 [**Ai-Automation**](https://github.com/Nevid-786/Ai-Automation) | AI-powered solutions for automation. |
 | 🛒 [**Amazone_clone**](https://github.com/Nevid-786/Amazone_clone) | Amazon-inspired e-commerce website. |
 | 🌐 [**IOT_Internet-of-things**](https://github.com/Nevid-786/IOT_Internet-of-things) | IoT automation & sensor projects with Arduino. |
 | 🌱 [**Crop_yield_ML_internship_Project**](https://github.com/Nevid-786/Crop_yield_ML_internship_Project) | ML model predicting crop yields. |
@@ -49,7 +50,9 @@
 | 🎨 [**Frontend**](https://github.com/Nevid-786/Frontend) | Frontend projects using HTML & CSS. |
 | 🌿 [**Nature_Layot_using_CSS_Grid**](https://github.com/Nevid-786/Nature_Layot_using_CSS_Grid) | Creative layout design with CSS Grid. |
 | 🐍 [**Python_Projects**](https://github.com/Nevid-786/Python_Projects) | Python projects for real-world problems. |
-| ⚙️ [**Ai-Automation**](https://github.com/Nevid-786/Ai-Automation) | Projects focusing on AI-powered automation solutions. |
+| 💡 [**ESP-32**](https://github.com/Nevid-786/ESP-32) | Projects and code for ESP32 microcontroller development. |
+| 💻 [**JavaScript**](https://github.com/Nevid-786/JavaScript) | Projects, exercises, and examples covering JavaScript. |
+
 
 ---
 
