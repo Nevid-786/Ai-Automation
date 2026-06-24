@@ -1,0 +1,317 @@
+{
+  "name": "Esptosheet",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "esp-32",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -752,
+        -240
+      ],
+      "id": "7251a569-d350-403c-938b-ab6bef3e771e",
+      "name": "Webhook",
+      "webhookId": "399f411f-54dc-443f-b5a7-ee9c2ddbb413"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1auRmY6lufpaJt337jNJqZuj6kn6f5g_j8l29YwRZ7_E",
+          "mode": "list",
+          "cachedResultName": "Off Grid Tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1auRmY6lufpaJt337jNJqZuj6kn6f5g_j8l29YwRZ7_E/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 574809853,
+          "mode": "list",
+          "cachedResultName": "Sheet2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1auRmY6lufpaJt337jNJqZuj6kn6f5g_j8l29YwRZ7_E/edit#gid=574809853"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Nearest Pole": "={{ $('Filter').item.json.nearestPole }}",
+            "Data": "={{ $('Filter').item.json.message }}",
+            "Alert Level": "={{ $('Filter').item.json.alertLevel }}",
+            "Time-of-SOS": "={{ $('Filter').item.json.timestamp }}",
+            "From": "={{ $('Filter').item.json.source }}",
+            "GPS": "=Lat:{{ $json.latitude }}|| Long:{{ $json.longitude }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Nearest Pole",
+              "displayName": "Nearest Pole",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Data",
+              "displayName": "Data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Alert Level",
+              "displayName": "Alert Level",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Time-of-SOS",
+              "displayName": "Time-of-SOS",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "From",
+              "displayName": "From",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "GPS",
+              "displayName": "GPS",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        400,
+        -304
+      ],
+      "id": "14270dfa-0f0e-4940-b06e-e774fc548807",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "d6KC0QSfL4QX1A0V",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "mdnabid76@gmail.com",
+        "subject": "Off Grid Tracker Alert",
+        "message": "={{ $json.htmlEmail }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -80,
+        -320
+      ],
+      "id": "e3cc9f65-bccc-4dae-a466-67e203c481fe",
+      "name": "Send a message",
+      "webhookId": "5de4d418-2987-485c-b4de-9ccf5bd4f616",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9Vw2BhiNS1NFgH01",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Incoming webhook body\nconst path = $input.first().json.body.path;   // e.g. \"B->A\", \"watch->A\", \"watch->B->A\"\nconst destination = $input.first().json.body.destination;\nconst data = $input.first().json.body.data;\n\n// Split path into array\nconst pathArray = path.split(\"->\");\n\n// Detect source\nconst isFromWatch = pathArray[0].toLowerCase() === \"watch\";\nconst source = isFromWatch ? \"watch\" : \"pole\";   // ✅ REQUIRED CHANGE\n\n// Determine nearest pole\nlet nearestPole = \"Unknown\";\n\nif (isFromWatch) {\n  nearestPole = pathArray[1] || \"Unknown\";\n} else {\n  nearestPole = pathArray[0];\n}\n\n// Pole name mapping\nconst poleMap = {\n  A: \"Pole A\",\n  B: \"Pole B\",\n  C: \"Pole C\",\n};\n\nconst poleName = poleMap[nearestPole] || `Pole ${nearestPole}`;\n\n// Emergency detection\nconst isEmergency = data === \"SOS\";\n\n// 🇮🇳 IST timestamp\nconst now = new Date();\nconst timestampReadable = new Intl.DateTimeFormat(\"en-IN\", {\n  timeZone: \"Asia/Kolkata\",\n  dateStyle: \"long\",\n  timeStyle: \"short\"\n}).format(now);\n\nreturn [\n  {\n    json: {\n      nearestPole,\n      poleName,\n      fullPath: path,\n      source,                    // ✅ \"watch\" or \"pole\"\n      destination,\n      message: data,\n      emergency: isEmergency,\n      alertLevel: isEmergency ? \"CRITICAL\" : \"NORMAL\",\n      timestamp: timestampReadable\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -464,
+        -240
+      ],
+      "id": "48ca2f08-fa4c-48f3-a8f4-a4aa422fbdcd",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Read values from previous node\nconst {\n  nearestPole,\n  poleName,\n  fullPath,\n  source,          // ✅ updated (was fromWatch)\n  destination,\n  message,\n  emergency,\n  alertLevel,\n  timestamp\n} = $json;\n\n// Badge colors\nconst alertColor = emergency ? \"#d32f2f\" : \"#2e7d32\";\n\n// Source label based on new `source` field\nconst sourceLabel =\n  source === \"watch\"\n    ? \"⌚ Wearable Device\"\n    : \"📡 Pole Network\";\n\n// HTML Email Template\nconst htmlEmail = `\n<!DOCTYPE html>\n<html>\n<head>\n  <meta charset=\"UTF-8\">\n  <style>\n    body {\n      font-family: Arial, sans-serif;\n      background-color: #f4f6f8;\n      padding: 20px;\n    }\n    .card {\n      max-width: 600px;\n      margin: auto;\n      background: #ffffff;\n      border-radius: 8px;\n      box-shadow: 0 4px 12px rgba(0,0,0,0.1);\n      overflow: hidden;\n    }\n    .header {\n      background: ${alertColor};\n      color: #ffffff;\n      padding: 16px;\n      text-align: center;\n      font-size: 20px;\n      font-weight: bold;\n    }\n    .content {\n      padding: 20px;\n      color: #333333;\n    }\n    .row {\n      margin-bottom: 12px;\n    }\n    .label {\n      font-weight: bold;\n      color: #555;\n    }\n    .footer {\n      background: #f0f0f0;\n      padding: 12px;\n      text-align: center;\n      font-size: 12px;\n      color: #777;\n    }\n    .badge {\n      display: inline-block;\n      padding: 6px 12px;\n      background: ${alertColor};\n      color: #fff;\n      border-radius: 4px;\n      font-size: 12px;\n    }\n  </style>\n</head>\n<body>\n\n  <div class=\"card\">\n    <div class=\"header\">\n      🚨 Off-Grid Tracker Alert\n    </div>\n\n    <div class=\"content\">\n      <div class=\"row\">\n        <span class=\"badge\">${alertLevel}</span>\n      </div>\n\n      <div class=\"row\">\n        <span class=\"label\">Message:</span> ${message}\n      </div>\n\n      <div class=\"row\">\n        <span class=\"label\">Nearest Pole:</span> ${poleName}\n      </div>\n\n      <div class=\"row\">\n        <span class=\"label\">Source:</span> ${sourceLabel}\n      </div>\n\n      <div class=\"row\">\n        <span class=\"label\">Path:</span> ${fullPath}\n      </div>\n\n      <div class=\"row\">\n        <span class=\"label\">Destination:</span> ${destination}\n      </div>\n\n      <div class=\"row\">\n        <span class=\"label\">Time (IST):</span> ${timestamp}\n      </div>\n    </div>\n\n    <div class=\"footer\">\n      Automated Alert • n8n • ESP32 • LoRa Network\n    </div>\n  </div>\n\n</body>\n</html>\n`;\n\nreturn [\n  {\n    json: {\n      htmlEmail\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -288,
+        -288
+      ],
+      "id": "ebffeae3-bc1a-4c2c-9c60-a9dd191f5660",
+      "name": "email generator"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Base (real) location\nconst BASE_LAT = 28.694715;\nconst BASE_LON = 77.049876;\n\n// Max radius in meters\nconst MAX_RADIUS = 50;\n\n// Earth constants\nconst METERS_PER_DEGREE_LAT = 111320;\nconst METERS_PER_DEGREE_LON =\n  111320 * Math.cos(BASE_LAT * Math.PI / 180);\n\n// Random distance (0–50 m)\nconst distance = Math.random() * MAX_RADIUS;\n\n// Random angle (0–360°)\nconst angle = Math.random() * 2 * Math.PI;\n\n// Offset in meters\nconst offsetX = distance * Math.cos(angle); // longitude\nconst offsetZ = distance * Math.sin(angle); // latitude\n\n// Convert meters → degrees\nconst deltaLat = offsetZ / METERS_PER_DEGREE_LAT;\nconst deltaLon = offsetX / METERS_PER_DEGREE_LON;\n\n// Final fake GPS coordinates\nconst fakeLat = BASE_LAT + deltaLat;\nconst fakeLon = BASE_LON + deltaLon;\n\n// Output\nreturn [\n  {\n    json: {\n      latitude: fakeLat,\n      longitude: fakeLon,\n      accuracy_m: MAX_RADIUS\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        128,
+        -352
+      ],
+      "id": "344a77d6-1684-4c17-8fe4-4d1cbd3c7b86",
+      "name": "email generator1"
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "neogenai.app.n8n.cloud",
+            "user-agent": "ESP32HTTPClient",
+            "content-length": "59",
+            "accept-encoding": "gzip, br",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "1.187.231.20",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "IN",
+            "cf-ray": "9bf3beae65b27f5f-MAA",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "x-forwarded-for": "1.187.231.20, 172.68.146.209",
+            "x-forwarded-host": "neogenai.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-73-749b7bdd47-fddqh",
+            "x-is-trusted": "yes",
+            "x-real-ip": "1.187.231.20"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "source": "A",
+            "path": "A",
+            "destination": "MAIN",
+            "data": "SOS"
+          },
+          "webhookUrl": "https://neogenai.app.n8n.cloud/webhook/esp-32",
+          "executionMode": "production"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ],
+    "email generator1": [
+      {
+        "json": {
+          "latitude": 28.694969498177667,
+          "longitude": 77.04954094468704,
+          "accuracy_m": 50
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        []
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "email generator1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "email generator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "email generator": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "email generator1": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "5bf7feaa-15a6-4f76-b9f4-0a87c878b997",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9978beaeb1c4a1c9c93445bd16e2216d8bc35257d16bc67eeb619498ac430cc0"
+  },
+  "id": "h0eKdL31vDsPOEld1Xdgo",
+  "tags": []
+}

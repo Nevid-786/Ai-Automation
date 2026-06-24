@@ -1,0 +1,364 @@
+{
+  "name": "Insta Reel Download",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.short.io/links",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "=Authorization",
+              "value": "sk_Nz0iMOANWbN234At"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"originalURL\": \"{{ $json.videos[0].url }}\",\n\"domain\": \"Nevid.short.gy\",\n  \"allowDuplicates\": false\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        128,
+        400
+      ],
+      "id": "e0f37a5a-2d18-48a4-8d5f-d9cfee4620df",
+      "name": "HTTP Request3"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://instagram120.p.rapidapi.com/api/instagram/links",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Rapidapi-Key",
+              "value": "1865b32bf3mshcb4fc4ad22ee54fp16c799jsnd08499057f2a"
+            },
+            {
+              "name": "X-Rapidapi-Host",
+              "value": "instagram120.p.rapidapi.com"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"url\": \"{{ $json.body.message }}\"\n} ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -464,
+        128
+      ],
+      "id": "efb0be0d-c527-4b36-bad1-2a13bedffefa",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.short.io/links",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "=Authorization",
+              "value": "sk_Nz0iMOANWbN234At"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"originalURL\": \"{{ $json.urls[0].url }}\",\n\"domain\": \"Nevid.short.gy\",\n  \"allowDuplicates\": false\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -304,
+        128
+      ],
+      "id": "ff31100c-5eca-40f8-9969-d8cc8cfe1e0c",
+      "name": "HTTP Request4"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "2506766e-9e2b-4cb7-9efc-dfec4b0bf77d",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -656,
+        112
+      ],
+      "id": "42d58d69-132b-454c-a1c1-7230dbd05840",
+      "name": "Webhook1",
+      "webhookId": "2506766e-9e2b-4cb7-9efc-dfec4b0bf77d"
+    },
+    {
+      "parameters": {
+        "url": "https://instagram-reels-downloader10.p.rapidapi.com/download",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "=url",
+              "value": "={{ $json.body.message }}"
+            },
+            {}
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Rapidapi-Key",
+              "value": "1865b32bf3mshcb4fc4ad22ee54fp16c799jsnd08499057f2a"
+            },
+            {
+              "name": "X-Rapidapi-Host",
+              "value": "instagram-reels-downloader10.p.rapidapi.com"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -32,
+        400
+      ],
+      "id": "75902baa-a927-4dd0-8b2e-d1262f4b545c",
+      "name": "HTTP Request5"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"message\": \"Just have it Bro\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        224,
+        112
+      ],
+      "id": "e6f6dc78-eb88-4952-9a46-ab95fc849000",
+      "name": "Respond to Webhook1",
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.instagram.com/v21.0/me/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer IGAAJjdG1fN5dBZAFFEaUhwcW1hVTNpZAExwa1NwUTVzTkpoeldiRzU3U2tEU2M4dDhvMUxlQ2pHWVhVcVVvVnlMNkF4M1psbU9LMlo0eUNYRVhibU8wQ2FJUU1qQnpvYjBYRjdKeTh1OVhibHhLOUMzVzdMM21Ha3hMZAk10NzlGQQZDZD"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"recipient\": {\n    \"id\": \"{{ $('Webhook1').item.json.body.sender_id }}\"\n  },\n  \"message\": {\n    \"text\": \"😎Here:{{ $json.shortURL }} \"\n  }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -16,
+        32
+      ],
+      "id": "249006f5-b535-4dbc-a312-f15075c7a2fb",
+      "name": "send msg1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.instagram.com/v21.0/me/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer IGAAJjdG1fN5dBZAFFEaUhwcW1hVTNpZAExwa1NwUTVzTkpoeldiRzU3U2tEU2M4dDhvMUxlQ2pHWVhVcVVvVnlMNkF4M1psbU9LMlo0eUNYRVhibU8wQ2FJUU1qQnpvYjBYRjdKeTh1OVhibHhLOUMzVzdMM21Ha3hMZAk10NzlGQQZDZD"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"recipient\": {\n    \"id\": \"{{ $('Webhook1').item.json.body.sender_id }}\"\n  },\n  \"message\": {\n    \"attachments\": [\n      {\n        \"type\": \"image\",\n        \"payload\": {\n          \"url\": \"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQqK3vpdCkwB2qVvxlSURv2B6nTKypdJi8JMQ&s\"\n          \n        }\n      }\n    ]\n  }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        0,
+        208
+      ],
+      "id": "1eb28b23-abad-4375-890a-920aade36cee",
+      "name": "send msg"
+    }
+  ],
+  "pinData": {
+    "Webhook1": [
+      {
+        "json": {
+          "headers": {
+            "host": "n8n-kznp.onrender.com",
+            "user-agent": "python-requests/2.32.5",
+            "content-length": "121",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "baggage": "sentry-trace_id=c0c975672a464fbab835d0f79524a61b,sentry-sample_rand=0.968176,sentry-environment=production,sentry-public_key=ade61558c5b222b1cdd60388200df5f4,sentry-transaction=/v1/tezdm/webhook/%7Bplatform%7D/,sentry-sample_rate=0.0009765625,sentry-sampled=false",
+            "cdn-loop": "cloudflare; loops=1",
+            "cf-connecting-ip": "208.77.246.12",
+            "cf-ipcountry": "SG",
+            "cf-ray": "99b4b611b891ce8d-PDX",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "content-type": "application/x-www-form-urlencoded",
+            "render-proxy-ttl": "4",
+            "rndr-id": "9323b6ab-0c0b-4b38",
+            "sentry-trace": "c0c975672a464fbab835d0f79524a61b-aa2f54b3131c9148-0",
+            "true-client-ip": "208.77.246.12",
+            "x-forwarded-for": "208.77.246.12, 104.23.160.67, 10.22.225.194",
+            "x-forwarded-proto": "https",
+            "x-request-start": "1762601142151338"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "message": "https://www.instagram.com/reel/DQcGr9OjETG/?utm_source=ig_web_copy_link",
+            "sender_id": "726146819756619"
+          },
+          "webhookUrl": "https://n8n-kznp.onrender.com/webhook/2506766e-9e2b-4cb7-9efc-dfec4b0bf77d",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request4": {
+      "main": [
+        [
+          {
+            "node": "send msg",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "send msg1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request5": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "send msg": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "send msg1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "2006932f-a5a8-4363-9567-b7fd304fddce",
+  "meta": {
+    "instanceId": "51b831b094d5502bc4d65c160ea20c4415cc5385c2e6dc0e5dddb9777a7e7048"
+  },
+  "id": "1Mr9VlysKw23DDYH",
+  "tags": []
+}

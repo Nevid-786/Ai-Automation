@@ -1,0 +1,937 @@
+{
+  "name": "Git automation",
+  "nodes": [
+    {
+      "parameters": {
+        "resource": "user",
+        "owner": {
+          "__rl": true,
+          "value": "Nevid-786",
+          "mode": "list",
+          "cachedResultName": "Nevid-786",
+          "cachedResultUrl": "https://github.com/Nevid-786"
+        }
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        -352,
+        384
+      ],
+      "id": "a447be19-1904-4c25-9327-9b8d4d540b5a",
+      "name": "Get a user's repositories",
+      "webhookId": "9b4157b4-2eb0-4ce8-82a6-ca8df57a2ae8",
+      "credentials": {
+        "githubApi": {
+          "id": "BUwre58bTdC5K7zK",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "get",
+        "owner": {
+          "__rl": true,
+          "value": "Nevid-786",
+          "mode": "list",
+          "cachedResultName": "Nevid-786",
+          "cachedResultUrl": "https://github.com/Nevid-786"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "Nevid-786",
+          "mode": "list",
+          "cachedResultName": "Nevid-786",
+          "cachedResultUrl": "https://github.com/Nevid-786/Nevid-786"
+        },
+        "filePath": "README.md",
+        "additionalParameters": {}
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        208,
+        944
+      ],
+      "id": "2c5a0f38-24fc-40ff-ba42-ba72dc2b7240",
+      "name": "Get a file",
+      "webhookId": "b3027143-0956-4caf-91bf-7461225c74d0",
+      "credentials": {
+        "githubApi": {
+          "id": "BUwre58bTdC5K7zK",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "options": {
+          "keepSource": "json"
+        }
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        416,
+        976
+      ],
+      "id": "4410ea91-1532-4162-9155-7159b360b28f",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        880,
+        224
+      ],
+      "id": "c74616d0-d731-4b11-b2bd-a1769ca96751",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract only the Notable Projects section\nconst readme = $json.data;\n\nconst start = readme.indexOf('### 🚀 Notable Projects');\nconst end = readme.indexOf('### 🔄 Current Goals');\n\nif (start !== -1 && end !== -1) {\n  return [{\n    notableProjects: readme.slice(start, end).trim()\n  }];\n} else {\n  return [{\n    notableProjects: 'Section not found'\n  }];\n}\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        736
+      ],
+      "id": "60072ab7-f5e3-4ea0-9074-00df80cc3508",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ✅ Extract the old README safely\nlet oldReadme =\n  $json.data ||\n  $json.readme ||\n  ($json.output && ($json.output.data || $json.output.readme)) ||\n  \"\";\n\nif (typeof oldReadme !== \"string\") {\n  oldReadme = JSON.stringify(oldReadme, null, 2);\n}\n\n// ✅ Extract the updated section (may be JSON or Markdown)\nlet updatedSection =\n  $json.updatedProjects ||\n  $json.data ||\n  ($json.output && ($json.output.updatedProjects || $json.output.data)) ||\n  \"\";\n\n// 🧹 STEP 1 — Remove code fences like ```json or ```markdown\nupdatedSection = updatedSection\n  .replace(/```json|```markdown|```/gi, \"\")\n  .trim();\n\n// 🧹 STEP 2 — Try to parse JSON and extract .data if it exists\nif (typeof updatedSection === \"string\" && updatedSection.trim().startsWith(\"{\")) {\n  try {\n    const parsed = JSON.parse(updatedSection);\n    updatedSection = parsed.data || parsed.content || updatedSection;\n  } catch (e) {\n    // ignore if not valid JSON\n  }\n}\n\n// 🧹 STEP 3 — Remove leftover {\"data\": \"...\"} fragments if still present\nupdatedSection = updatedSection\n  .replace(/^\\s*\\{?\\s*\"data\"\\s*:\\s*\"?/i, \"\")\n  .replace(/\"\\s*\\}?$/, \"\")\n  .replace(/\\\\n/g, \"\\n\")\n  .replace(/\\\\\"/g, '\"')\n  .trim();\n\n// ✅ Replace inside README\nconst start = oldReadme.indexOf(\"### 🚀 Notable Projects\");\nconst end = oldReadme.indexOf(\"### 🔄 Current Goals\");\n\nlet newReadme;\nif (start !== -1 && end !== -1) {\n  newReadme =\n    oldReadme.slice(0, start) +\n    updatedSection.trim() +\n    \"\\n\\n\" +\n    oldReadme.slice(end);\n} else {\n  // append if section not found\n  newReadme = oldReadme + \"\\n\\n\" + updatedSection;\n}\n\n// ✅ Always return valid n8n item\nreturn [{ newReadme }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        352
+      ],
+      "id": "aca066ee-55bf-4077-9127-4a9d2fc07fef",
+      "name": "Code in JavaScript4"
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n Code node (JavaScript) - Run Once for All Items\n// This code finds the AI output string (handles multiple shapes), normalizes newlines,\n// extracts lines starting with '- ' or bullet chars, then converts them to a markdown table.\n\nconst item = items && items.length ? items[0].json : {};\n\n// Try several common places where the AI output might be\nlet aiOutput =\n  // direct common keys\n  item.data ||\n  item.text ||\n  item.output ||\n  // sometimes nested\n  (item.output && (item.output.data || item.output.text)) ||\n  // sometimes ai outputs array\n  (Array.isArray(item.output) && item.output[0] && (item.output[0].data || item.output[0].text)) ||\n  // fallback: stringified JSON (if the node returned a pure JSON object)\n  null;\n\n// If not found yet, try to find first non-empty string value in object\nif (!aiOutput) {\n  for (const k of Object.keys(item)) {\n    const v = item[k];\n    if (typeof v === 'string' && v.trim().length > 0) {\n      aiOutput = v;\n      break;\n    }\n  }\n}\n\n// Final fallback: stringify the whole JSON if nothing else found\nif (!aiOutput) aiOutput = JSON.stringify(item, null, 2);\n\n// If aiOutput is not a string (object), stringify it\nif (typeof aiOutput !== 'string') {\n  aiOutput = JSON.stringify(aiOutput);\n}\n\n// Convert escaped newline sequences like \"\\n\" into actual newlines\n// (handles double-escaped strings as well)\naiOutput = aiOutput.replace(/\\\\n/g, '\\n').replace(/\\\\r/g, '\\r');\n\n// Normalize CRLF -> LF\naiOutput = aiOutput.replace(/\\r\\n/g, '\\n');\n\n// Split into lines\nconst allLines = aiOutput.split('\\n');\n\n// Pick lines that look like project bullets.\n// Accepts lines starting with '- ' or '•' or other common bullets.\nconst projectLines = allLines.filter(l => {\n  const t = l.trim();\n  return t.startsWith('- ') || t.startsWith('•') || /^\\-?\\s*🛒|^-\\s*🛒/.test(t);\n});\n\n// If none found, also try to detect lines that contain an emoji + name + dash\nif (projectLines.length === 0) {\n  for (const l of allLines) {\n    if (/–| - |—/.test(l) && /[A-Za-z0-9_\\-]/.test(l)) projectLines.push(l);\n  }\n}\n\n// Convert project lines into table rows\nconst rows = projectLines.map(line => {\n  // Remove leading bullet and trim\n  let raw = line.replace(/^\\s*[-•]\\s*/, '').trim();\n\n  // Sometimes projects are in the form: \"🛒 Amazone_clone – Description\"\n  // Split by en-dash/em-dash/hyphen surrounded by spaces\n  const parts = raw.split(/\\s+–\\s+|\\s+—\\s+|\\s+-\\s+/);\n\n  // If parts length < 2, try splitting only at first ' – ' char or ' - '\n  if (parts.length < 2) {\n    const idx = raw.indexOf('–') !== -1 ? raw.indexOf('–') : raw.indexOf('-');\n    if (idx !== -1) parts = [ raw.slice(0, idx).trim(), raw.slice(idx + 1).trim() ];\n  }\n\n  // Fallback: if still 1 part, put whole text in project column and blank description\n  const project = (parts[0] || '').trim();\n  const desc = (parts[1] || '').trim();\n\n  // Keep any markdown link or formatting inside project text (no change)\n  return `| ${project} | ${desc} |`;\n}).filter(Boolean);\n\n// Build table; if no rows found, return the original section unchanged\nlet table;\nif (rows.length === 0) {\n  // As fallback return the raw AI output but with newlines fixed\n  table = aiOutput;\n} else {\n  table = [\n    '### 🚀 Notable Projects',\n    '',\n    '| Project | Description |',\n    '|---|---|',\n    ...rows,\n    '',\n    '---',\n    ''\n  ].join('\\n');\n}\n\n// Return as updatedProjects\nreturn [{ updatedProjects: table }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1488,
+        288
+      ],
+      "id": "18152337-913e-46bb-99eb-f1ea9e7d7178",
+      "name": "Covert to markdown Table"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1728,
+        368
+      ],
+      "id": "183cc95a-0f82-4ef3-adf3-5f01f26f904d",
+      "name": "Merge2"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "edit",
+        "owner": {
+          "__rl": true,
+          "value": "Nevid-786",
+          "mode": "list",
+          "cachedResultName": "Nevid-786",
+          "cachedResultUrl": "https://github.com/Nevid-786"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "Ai-Automation",
+          "mode": "list",
+          "cachedResultName": "Ai-Automation",
+          "cachedResultUrl": "https://github.com/Nevid-786/Ai-Automation"
+        },
+        "filePath": "README.md",
+        "fileContent": "={{ $json.newReadme }}",
+        "commitMessage": "\"updated via ai\""
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        2160,
+        384
+      ],
+      "id": "3f7a652d-ae46-42e1-91db-a600d2155674",
+      "name": "Edit a file",
+      "webhookId": "8d70ad3f-10cb-4f4e-bb65-4228966767c8",
+      "credentials": {
+        "githubApi": {
+          "id": "BUwre58bTdC5K7zK",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "fieldsToMatchString": "Name",
+        "joinMode": "keepNonMatches",
+        "outputDataFrom": "input2",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        688,
+        272
+      ],
+      "id": "81acc15f-7943-40f9-baa8-df6966c5ab56",
+      "name": "Filter New Repos From old repos"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash-thinking-exp-1219",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1168,
+        432
+      ],
+      "id": "f297b326-e03c-434f-bf57-e5e3bf6dff3d",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "p1AIb24DJrLrF4PJ",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=you are my git repo handler your Task is to anylise the New added repository name {{ $json.Name }} and just add details of it in new row of the exiisting table of Notable projects in below html according to its name given below and return the other things exactly same as md format.\nExisting data:{{ $json.notableProjects }}\nReturn your answer strictly in this JSON format only:\n{\n  \"data\": \"<your updated README markdown or section>\"\n}\n\n\n",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        1120,
+        256
+      ],
+      "id": "bfaa63c9-9ad1-4749-be19-5dd7e3bb7d3c",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Keep only unique Names\nconst seen = new Set();\nconst unique = [];\n\nfor (const item of items) {\n  const name = item.json.Name;\n  if (!seen.has(name)) {\n    seen.add(name);\n    unique.push(item);\n  }\n}\n\nreturn unique;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        384
+      ],
+      "id": "02d9c6fc-ac7a-467a-862e-69a8a0beab99",
+      "name": "Unique repos"
+    },
+    {
+      "parameters": {
+        "base": {
+          "__rl": true,
+          "value": "appCkhGpr6xNNwVDg",
+          "mode": "list",
+          "cachedResultName": "n8n1",
+          "cachedResultUrl": "https://airtable.com/appCkhGpr6xNNwVDg"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblsJOaCOutn4MyEY",
+          "mode": "list",
+          "cachedResultName": "New Record",
+          "cachedResultUrl": "https://airtable.com/appCkhGpr6xNNwVDg/tblsJOaCOutn4MyEY"
+        },
+        "id": "={{ $json.id }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        448,
+        368
+      ],
+      "id": "59e2f142-67a8-41b3-a1d7-caa4adaf7f1b",
+      "name": "All repos Get",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "b9ZLqH8ibXrzZFvt",
+          "name": "Unnamed credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appCkhGpr6xNNwVDg",
+          "mode": "list",
+          "cachedResultName": "n8n1",
+          "cachedResultUrl": "https://airtable.com/appCkhGpr6xNNwVDg"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblsJOaCOutn4MyEY",
+          "mode": "list",
+          "cachedResultName": "New Record",
+          "cachedResultUrl": "https://airtable.com/appCkhGpr6xNNwVDg/tblsJOaCOutn4MyEY"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        16,
+        384
+      ],
+      "id": "5e2a2099-234d-4d03-809f-2312b53563d0",
+      "name": "List of All Repos search",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "b9ZLqH8ibXrzZFvt",
+          "name": "Unnamed credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "base": {
+          "__rl": true,
+          "value": "appCkhGpr6xNNwVDg",
+          "mode": "list",
+          "cachedResultName": "n8n1",
+          "cachedResultUrl": "https://airtable.com/appCkhGpr6xNNwVDg"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblQMC1Vo14PLc29p",
+          "mode": "list",
+          "cachedResultName": "Old Record",
+          "cachedResultUrl": "https://airtable.com/appCkhGpr6xNNwVDg/tblQMC1Vo14PLc29p"
+        },
+        "id": "={{ $json.id }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        432,
+        96
+      ],
+      "id": "034684ef-be9b-44ac-bb0d-02997afd565d",
+      "name": "Old Repo Get",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "b9ZLqH8ibXrzZFvt",
+          "name": "Unnamed credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appCkhGpr6xNNwVDg",
+          "mode": "list",
+          "cachedResultName": "n8n1",
+          "cachedResultUrl": "https://airtable.com/appCkhGpr6xNNwVDg"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblsJOaCOutn4MyEY",
+          "mode": "list",
+          "cachedResultName": "New Record",
+          "cachedResultUrl": "https://airtable.com/appCkhGpr6xNNwVDg/tblsJOaCOutn4MyEY"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        -448,
+        976
+      ],
+      "id": "5783d865-fdf8-459a-9f19-a9f538191f4b",
+      "name": "List of All Repos",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "b9ZLqH8ibXrzZFvt",
+          "name": "Unnamed credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "deleteRecord",
+        "base": {
+          "__rl": true,
+          "value": "appCkhGpr6xNNwVDg",
+          "mode": "list",
+          "cachedResultName": "n8n1",
+          "cachedResultUrl": "https://airtable.com/appCkhGpr6xNNwVDg"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblsJOaCOutn4MyEY",
+          "mode": "list",
+          "cachedResultName": "New Record",
+          "cachedResultUrl": "https://airtable.com/appCkhGpr6xNNwVDg/tblsJOaCOutn4MyEY"
+        },
+        "id": "={{ $json.id }}"
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        -160,
+        976
+      ],
+      "id": "cd63abbf-349e-4104-983b-5870b8ad4852",
+      "name": "Delete all Repos in Record2",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "b9ZLqH8ibXrzZFvt",
+          "name": "Unnamed credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appCkhGpr6xNNwVDg",
+          "mode": "list",
+          "cachedResultName": "n8n1",
+          "cachedResultUrl": "https://airtable.com/appCkhGpr6xNNwVDg"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblsJOaCOutn4MyEY",
+          "mode": "list",
+          "cachedResultName": "New Record",
+          "cachedResultUrl": "https://airtable.com/appCkhGpr6xNNwVDg/tblsJOaCOutn4MyEY"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $json.name }}"
+          },
+          "matchingColumns": [
+            "Name"
+          ],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        -208,
+        384
+      ],
+      "id": "fcf6b56e-6d21-467c-83e0-23e68740595a",
+      "name": "Create list of all latest Repos in Record 2",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "b9ZLqH8ibXrzZFvt",
+          "name": "Unnamed credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appCkhGpr6xNNwVDg",
+          "mode": "list",
+          "cachedResultName": "n8n1",
+          "cachedResultUrl": "https://airtable.com/appCkhGpr6xNNwVDg"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblQMC1Vo14PLc29p",
+          "mode": "list",
+          "cachedResultName": "Old Record",
+          "cachedResultUrl": "https://airtable.com/appCkhGpr6xNNwVDg/tblQMC1Vo14PLc29p"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        48,
+        96
+      ],
+      "id": "68b06097-c689-4f35-bdb8-f1f35a898afa",
+      "name": "List of Old Repos Search in Record 1",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "b9ZLqH8ibXrzZFvt",
+          "name": "Unnamed credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "Get the README.md from  Github Repo",
+        "height": 448,
+        "width": 1136
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        128,
+        720
+      ],
+      "typeVersion": 1,
+      "id": "f60dfd42-0386-4428-b16e-b4b344c7cbc2",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "Delete Repos in Record 2",
+        "height": 288,
+        "width": 560,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -528,
+        848
+      ],
+      "typeVersion": 1,
+      "id": "6ef5f601-04f4-4a6a-9734-43f233379c3c",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "Gets the Old repo data from record 1",
+        "height": 256,
+        "width": 592,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        0
+      ],
+      "typeVersion": 1,
+      "id": "94730785-6657-41fe-b722-c9e8437ac3e1",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": " Gets the all latest repo From github and saves it data in record 2",
+        "height": 256,
+        "width": 928,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -368,
+        304
+      ],
+      "typeVersion": 1,
+      "id": "e39f3f0a-73dc-417d-ad5f-42a6202c2d69",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Keep only unique Names\nconst seen = new Set();\nconst unique = [];\n\nfor (const item of items) {\n  const name = item.json.Name;\n  if (!seen.has(name)) {\n    seen.add(name);\n    unique.push(item);\n  }\n}\n\nreturn unique;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        96
+      ],
+      "id": "1192753b-4d7f-404a-8c76-94726abe8627",
+      "name": "Unique repos1"
+    },
+    {
+      "parameters": {
+        "path": "a74a9435-9aa8-42b9-9d38-d2de31a9a473",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -880,
+        432
+      ],
+      "id": "b61ba1cf-9eed-4ea7-b814-5e76c2ffcef8",
+      "name": "Webhook",
+      "webhookId": "a74a9435-9aa8-42b9-9d38-d2de31a9a473"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appCkhGpr6xNNwVDg",
+          "mode": "list",
+          "cachedResultName": "n8n1",
+          "cachedResultUrl": "https://airtable.com/appCkhGpr6xNNwVDg"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblQMC1Vo14PLc29p",
+          "mode": "list",
+          "cachedResultName": "Old Record",
+          "cachedResultUrl": "https://airtable.com/appCkhGpr6xNNwVDg/tblQMC1Vo14PLc29p"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $json.Name }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "New Record",
+              "displayName": "New Record",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        1104,
+        0
+      ],
+      "id": "b240902c-9587-4fd8-93f0-2dc65643915c",
+      "name": "Create a record",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "b9ZLqH8ibXrzZFvt",
+          "name": "Unnamed credential"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Get a user's repositories": {
+      "main": [
+        [
+          {
+            "node": "Create list of all latest Repos in Record 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a file": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Covert to markdown Table": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript4": {
+      "main": [
+        [
+          {
+            "node": "Edit a file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge2": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter New Repos From old repos": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Create a record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Covert to markdown Table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Unique repos": {
+      "main": [
+        [
+          {
+            "node": "All repos Get",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "All repos Get": {
+      "main": [
+        [
+          {
+            "node": "Filter New Repos From old repos",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "List of All Repos search": {
+      "main": [
+        [
+          {
+            "node": "Unique repos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Old Repo Get": {
+      "main": [
+        [
+          {
+            "node": "Filter New Repos From old repos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List of All Repos": {
+      "main": [
+        [
+          {
+            "node": "Delete all Repos in Record2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create list of all latest Repos in Record 2": {
+      "main": [
+        [
+          {
+            "node": "List of All Repos search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List of Old Repos Search in Record 1": {
+      "main": [
+        [
+          {
+            "node": "Unique repos1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Unique repos1": {
+      "main": [
+        [
+          {
+            "node": "Old Repo Get",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "List of All Repos",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get a user's repositories",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "List of Old Repos Search in Record 1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get a file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "bd55483c-ed63-415c-a80e-d7fd47943636",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "51b831b094d5502bc4d65c160ea20c4415cc5385c2e6dc0e5dddb9777a7e7048"
+  },
+  "id": "snADhxCuNvPwFcew",
+  "tags": []
+}
